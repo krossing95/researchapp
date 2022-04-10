@@ -17,6 +17,7 @@
     "dotenv": "^14.2.0",
     "es6-promise": "^4.2.8",
     "express": "^4.17.2",
+    "googleapis": "^100.0.0",
     "helmet": "^5.0.2",
     "isomorphic-fetch": "^3.0.0",
     "jsonwebtoken": "^8.5.1",

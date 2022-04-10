@@ -1,12 +1,26 @@
 const nodemailer = require('nodemailer');
+const { google } = require('googleapis');
+const OAuth2 = google.auth.OAuth2;
+const OAuth2Client = new OAuth2(
+    process.env.OAUTH_CLIENT, process.env.OAUTH_SECRET, process.env.OAUTH_REDIRECT_URL
+)
+OAuth2Client.setCredentials({
+    refresh_token: process.env.REFRESH_TOKEN
+})
+const accessToken = OAuth2Client.getAccessToken();
 
 const transporter = nodemailer.createTransport({
-    host: "smtp-relay.sendinblue.com",
-    port: 587,
-    secure: false,
+    service: "gmail",
     auth: {
+        type: "OAuth2",
         user: `${process.env.GMAIL_USER}@gmail.com`,
-        pass: `${process.env.GMAIL_PASSWORD}`
+        clientId: process.env.OAUTH_CLIENT,
+        clientSecret: process.env.OAUTH_SECRET,
+        refreshToken: process.env.REFRESH_TOKEN,
+        accessToken: accessToken
+    },
+    tls: {
+        rejectUnauthorized: false
     }
 });
 
