@@ -174,7 +174,7 @@ module.exports = {
                                             return res.status(200).json({ message: 'Your account was verified successfully' });
                                         }
                                         await User.findByIdAndDelete(userId).clone().catch(err => console.warn(err));
-                                        return res.status(500).json({ error: 'Verification has failed. Our efforts to resend another link has also failed, hence your account got trashed. Please sign up again. Sorry for any inconvinience caused. You may please contact the administrator if issues persists.' });
+                                        return res.status(500).json({ error: 'Verification has failed. Our efforts to resend another link has also failed, hence your account got trashed. Please sign up again. Sorry for any inconvinience caused. You may please contact the administrator if issues persists.', verified: updateResponse });
                                     }
                                     return res.status(500).json({ error: 'Something went wrong and account verification has failed' });
                                 }).clone().catch(err => console.warn(err));
