@@ -95,36 +95,26 @@ module.exports = {
                             if (!errors) {
                                 const newUser = { id: result._id.toString(), title: result.title, gender: result.gender, firstname: capitalize(result.firstname), lastname: capitalize(result.lastname), email: result.email, phone: result.phone }
                                 const mailer = await authVerifier(user.email, `${process.env.CLIENT_URL}account/verify?code=${verificationCode}&user=${result._id}`);
-                                if (mailer.status === true) {
-                                    return res.status(201).json({message: mailer.mailObj, newUser})
+                                if (mailer.status) {
+                                    const hashedCode = await hashSync(verificationCode, salt);
+                                    await Verification.deleteMany({ user_id: result._id });
+                                    const putVerificationCode = new Verification({ user_id: result._id, verificationCode: hashedCode });
+                                    await putVerificationCode.save();
+                                    return res.status(201).json({ result: newUser, message: 'User created successfully, check your mail to verify' });
                                 }
-                                return res.json({result, error: 'mail not sent'});
+                                await User.findByIdAndDelete(result._id, (error, success) => {
+                                    if (!error) {
+                                        return res.status(412).json({ error: 'User registration was not successful' });
+                                    }
+                                    return res.status(500).json({ error: 'Something went wrong. Please contact the administrators' });
+                                });
+                                return
                             }
                             return res.status(500).json({ error: 'Ouch! Unexpected error encountered' })
                         })
                         return null
-                        // await userInstance.save(async (errors, result) => {
-                        //     if (!errors) {
-                        //         
-                        //         
-                        //         if (mailer.status === false) {
-                        //             await User.findByIdAndDelete(result._id, (error, success) => {
-                        //                 if (!error) {
-                        //                     return res.status(412).json({ error: 'User registration was not successful' });
-                        //                 }
-                        //                 return res.status(500).json({ error: 'Something went wrong. Please contact the administrators' });
-                        //             });
-                        //         }
-                        //         const hashedCode = await hashSync(verificationCode, salt);
-                        //         await Verification.deleteMany({ user_id: result._id });
-                        //         const putVerificationCode = new Verification({ user_id: result._id, verificationCode: hashedCode });
-                        //         await putVerificationCode.save();
-                        //         return res.status(201).json({ result: newUser, message: 'User created successfully, check your mail to verify' });
-                        //     }
-                        //     
-                        // });
-                        return null
                     }
+                    return res.status(500).json({ error: 'Ouch! Unexpected error encountered' })
                 }).clone().catch(err => console.error(err));
                 return null
             })
@@ -169,7 +159,7 @@ module.exports = {
                                 const newVerificationCode = v4();
                                 const hashedCode = await hashSync(newVerificationCode, salt);
                                 const mailer = await authVerifier(result.email, `${process.env.CLIENT_URL}account/verify?code=${newVerificationCode}&user=${result._id}`);
-                                if (mailer) {
+                                if (mailer.status) {
                                     await Verification.deleteMany({ user_id: result._id });
                                     const putVerificationCode = new Verification({ user_id: result._id, verificationCode: hashedCode });
                                     await putVerificationCode.save();
@@ -214,7 +204,7 @@ module.exports = {
                 const verificationCode = v4();
                 const hashedCode = await hashSync(verificationCode, salt);
                 const mailer = await authVerifier(result.email, `${process.env.CLIENT_URL}account/verify?code=${verificationCode}&user=${result._id}`);
-                if (mailer !== false) {
+                if (mailer.status !== false) {
                     await Verification.deleteMany({ user_id: result._id });
                     const putVerificationCode = new Verification({ user_id: result._id, verificationCode: hashedCode });
                     await putVerificationCode.save();
@@ -239,7 +229,7 @@ module.exports = {
                     const uniqueCode = v4();
                     const hashedCode = await hashSync(uniqueCode, salt);
                     const mailer = await passwordResetLink(email, `${process.env.CLIENT_URL}account/reset_password?code=${uniqueCode}&user=${result._id}`);
-                    if (mailer !== false) {
+                    if (mailer.status !== false) {
                         await PasswordReset.deleteMany({ user_id: result._id });
                         const storeUniqueCode = new PasswordReset({ user_id: result._id, code: hashedCode });
                         await storeUniqueCode.save();
@@ -412,7 +402,7 @@ module.exports = {
                         await User.findByIdAndUpdate(userId, { firstname: capitalize(firstname) || result.firstname, lastname: capitalize(lastname) || result.lastname, email: email || result.email, phone : phone || result.phone, usertype: usertype || result.usertype, story: ifStory, gender: gender || result.gender, title: title || result.title, extraDuty: dutyAssignment }, async (err, response) => {
                             if (!err) {
                                 const mailer = await userUpdateInformer(email, capitalize(firstname), capitalize(lastname), phone, ifStory, gender, title)
-                                if (mailer !== false) {
+                                if (mailer.status !== false) {
                                     response.password = undefined;
                                     return res.status(200).json({ message: 'User update was successfully executed', user: response });
                                 }

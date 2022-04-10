@@ -39,7 +39,7 @@ module.exports = {
         }).then(info => {
             if (info.accepted !== undefined) {
                 if (info.accepted[0] === receiver) {
-                    return { status: true, message: 'Message was successfully sent!', mailObj: info }
+                    return { status: true, message: 'Message was successfully sent!' }
                 }
                 return { status: false }
             }
