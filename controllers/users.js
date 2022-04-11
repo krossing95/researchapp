@@ -153,7 +153,7 @@ module.exports = {
                             return res.status(412).json({ error: 'Incorrect URL parameters, please follow the exact link in your mail' });
                         } else if (compareCode) {
                             const registrationDate = new Date(result.date).getTime();
-                            const currTime = new Date().getTime();
+                            const currTime = new Date(currentTime()).getTime();
                             const diffTime = (currTime - registrationDate) / 1000;
                             if (diffTime > 3600) {
                                 const newVerificationCode = v4();
@@ -165,7 +165,7 @@ module.exports = {
                                     await putVerificationCode.save();
                                     return res.status(200).json({ message: 'The verification code has expired, but we have sent a new verification link to you' });
                                 }
-                                return res.status(500).json({ error: 'The verification code has expired, please request for new one' });
+                                return res.status(500).json({ error: 'The verification code has expired, please request for new one', time: currentTime() });
                             } else {
                                 await User.findByIdAndUpdate(userId, { status: 2 }, async (updateError, updateResponse) => {
                                     if (!updateError) {
