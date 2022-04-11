@@ -98,7 +98,7 @@ module.exports = {
                                 if (mailer.status) {
                                     const hashedCode = await hashSync(verificationCode, salt);
                                     await Verification.deleteMany({ user_id: result._id });
-                                    const putVerificationCode = new Verification({ user_id: result._id, verificationCode: hashedCode });
+                                    const putVerificationCode = new Verification({ user_id: result._id, verificationCode: hashedCode, date: new Date() });
                                     await putVerificationCode.save();
                                     return res.status(201).json({ result: newUser, message: 'User created successfully, check your mail to verify' });
                                 }
@@ -256,7 +256,7 @@ module.exports = {
                             return res.status(412).json({ error: 'Incorrect URL parameters. Please follow the exact link in your mail' });
                         } else if (compareCode) {
                             const requestTime = new Date(result.date).getTime();
-                            const currTime = new Date().getTime();
+                            const currTime = new Date(currentTime()).getTime();
                             const diffTime = (currTime - requestTime) / 1000;
                             if (diffTime > 1800) {
                                 await PasswordReset.deleteMany({ user_id: userId });

@@ -1,6 +1,4 @@
 const mongoose = require('mongoose');
-const { currentTime } = require('../custom');
-
 
 const VerificationSchema = new mongoose.Schema({
     user_id: {
@@ -13,7 +11,7 @@ const VerificationSchema = new mongoose.Schema({
     },
     date: {
         type: String,
-        default: currentTime()
+        required: true
     }
 },
     {
