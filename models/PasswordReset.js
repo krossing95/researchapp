@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const { currentTime } = require('../custom');
 
 const PasswordResetSchema = new mongoose.Schema({
     user_id: {
@@ -12,7 +11,7 @@ const PasswordResetSchema = new mongoose.Schema({
     },
     date: {
         type: String,
-        default: currentTime()
+        required: true
     }
 }, {
     timestamps: true

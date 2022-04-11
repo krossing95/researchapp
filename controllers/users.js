@@ -12,6 +12,7 @@ const Reason = require('../models/Reasons');
 const { botChecker } = require('../middlewares');
 const Archieve = require('../models/Archieve');
 const ArchieveCategory = require('../models/ArchieveCategory');
+const moment = require('moment');
 
 const cloudinaryUploader = cloudinaryConfig();
 const salt = genSaltSync(10);
@@ -98,7 +99,7 @@ module.exports = {
                                 if (mailer.status) {
                                     const hashedCode = await hashSync(verificationCode, salt);
                                     await Verification.deleteMany({ user_id: result._id });
-                                    const putVerificationCode = new Verification({ user_id: result._id, verificationCode: hashedCode, date: new Date() });
+                                    const putVerificationCode = new Verification({ user_id: result._id, verificationCode: hashedCode, date: (new Date()).toISOString() });
                                     await putVerificationCode.save();
                                     return res.status(201).json({ result: newUser, message: 'User created successfully, check your mail to verify' });
                                 }
@@ -152,10 +153,10 @@ module.exports = {
                         if (!compareCode) {
                             return res.status(412).json({ error: 'Incorrect URL parameters, please follow the exact link in your mail' });
                         } else if (compareCode) {
-                            const registrationDate = new Date(result.date).getTime();
-                            const currTime = new Date(currentTime()).getTime();
-                            const diffTime = (currTime - registrationDate) / 1000;
-                            if (diffTime > 3600) {
+                            const registrationDate = moment(result.date)
+                            const currentTime = moment((new Date()).toISOString())
+                            const diffTime = currentTime.diff(registrationDate, 'minutes')
+                            if (diffTime > 60) {
                                 const newVerificationCode = v4();
                                 const hashedCode = await hashSync(newVerificationCode, salt);
                                 const mailer = await authVerifier(result.email, `${process.env.CLIENT_URL}account/verify?code=${newVerificationCode}&user=${result._id}`);
@@ -202,7 +203,7 @@ module.exports = {
                 const mailer = await authVerifier(result.email, `${process.env.CLIENT_URL}account/verify?code=${verificationCode}&user=${result._id}`);
                 if (mailer.status !== false) {
                     await Verification.deleteMany({ user_id: result._id });
-                    const putVerificationCode = new Verification({ user_id: result._id, verificationCode: hashedCode });
+                    const putVerificationCode = new Verification({ user_id: result._id, verificationCode: hashedCode, date: (new Date()).toISOString() });
                     await putVerificationCode.save();
                     return res.status(200).json({ message: 'Please check your mail for a new verification link' });
                 }
@@ -227,7 +228,7 @@ module.exports = {
                     const mailer = await passwordResetLink(email, `${process.env.CLIENT_URL}account/reset_password?code=${uniqueCode}&user=${result._id}`);
                     if (mailer.status !== false) {
                         await PasswordReset.deleteMany({ user_id: result._id });
-                        const storeUniqueCode = new PasswordReset({ user_id: result._id, code: hashedCode });
+                        const storeUniqueCode = new PasswordReset({ user_id: result._id, code: hashedCode, date: (new Date()).toISOString() });
                         await storeUniqueCode.save();
                         return res.status(200).json({ message: 'Please check your mail for direction to reset your password' });
                     }
@@ -255,10 +256,10 @@ module.exports = {
                         if (!compareCode) {
                             return res.status(412).json({ error: 'Incorrect URL parameters. Please follow the exact link in your mail' });
                         } else if (compareCode) {
-                            const requestTime = new Date(result.date).getTime();
-                            const currTime = new Date(currentTime()).getTime();
-                            const diffTime = (currTime - requestTime) / 1000;
-                            if (diffTime > 1800) {
+                            const requestTime = moment(result.date)
+                            const currentTime = moment((new Date()).toISOString())
+                            const diffTime = currentTime.diff(requestTime, 'minutes')
+                            if (diffTime > 30) {
                                 await PasswordReset.deleteMany({ user_id: userId });
                                 return res.status(412).json({ error: 'The link has expired. Please retry sending a new forgot password request to get new link' });
                             } else {
