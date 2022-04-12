@@ -162,11 +162,12 @@ module.exports = {
                                 const mailer = await authVerifier(result.email, `${process.env.CLIENT_URL}account/verify?code=${newVerificationCode}&user=${result._id}`);
                                 if (mailer.status) {
                                     await Verification.deleteMany({ user_id: result._id });
-                                    const putVerificationCode = new Verification({ user_id: result._id, verificationCode: hashedCode });
+                                    const putVerificationCode = new Verification({ user_id: result._id, verificationCode: hashedCode, date: (new Date()).toISOString() });
                                     await putVerificationCode.save();
                                     return res.status(200).json({ message: 'The verification code has expired, but we have sent a new verification link to you' });
                                 }
-                                return res.status(500).json({ error: 'The verification code has expired, please request for new one', time: currentTime() });
+                                await User.findByIdAndDelete(userId).clone().catch(err => console.warn(err))
+                                return res.status(500).json({ error: 'The verification code has expired. We unfortunately failed to resend new one, hence system trashed your account. Please register again or contact the administrator if the issue persists' });
                             } else {
                                 await User.findByIdAndUpdate(userId, { status: 2 }, async (updateError, updateResponse) => {
                                     if (!updateError) {
@@ -207,7 +208,7 @@ module.exports = {
                     await putVerificationCode.save();
                     return res.status(200).json({ message: 'Please check your mail for a new verification link' });
                 }
-                return res.status(500).json({ error: 'Something went wrong, hence link could not be sent!' });
+                return res.status(500).json({ error: 'Something went wrong, hence link could not be sent! Please contact the administrator' });
             }
             return res.status(404).json({ error: 'Whoops! Account does not exist anymore!' });
         }).clone().catch(err => console.warn(err));
@@ -269,7 +270,7 @@ module.exports = {
                                         await PasswordReset.deleteMany({ user_id: userId });
                                         return res.status(200).json({ message: 'Your password was changed successfully' });
                                     }
-                                    return res.status(500).json({ error: 'Something went wrong and account verification has failed' });
+                                    return res.status(500).json({ error: 'Something went wrong and pasword reset has failed. Please try later.' });
                                 }).clone().catch(err => console.warn(err));
                                 return;
                             }
