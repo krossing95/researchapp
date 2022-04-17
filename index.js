@@ -17,7 +17,7 @@ const categoriesRouter = require('./routes/categories');
 const archievesRouter = require('./routes/archieves');
 
 app.use(cors({
-    origin: ['https://pharmakaiv.netlify.app', 'https://pharmakaiv-admin.netlify.app'], 
+    origin: ['https://pharmakaiv.netlify.app/', 'https://pharmakaiv-admin.netlify.app/'], 
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE']
 }));                                        
