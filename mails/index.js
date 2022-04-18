@@ -7,22 +7,31 @@ const OAuth2Client = new OAuth2(
 OAuth2Client.setCredentials({
     refresh_token: process.env.REFRESH_TOKEN
 })
-const accessToken = OAuth2Client.getAccessToken()
 
-const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        type: "OAuth2",
-        user: `${process.env.GMAIL_USER}@gmail.com`,
-        clientId: process.env.OAUTH_CLIENT,
-        clientSecret: process.env.OAUTH_SECRET,
-        refreshToken: process.env.REFRESH_TOKEN,
-        accessToken: accessToken
-    },
-    tls: {
-        rejectUnauthorized: false
+let transporter;
+
+async () => {
+    try {
+        const accessToken = await OAuth2Client.getAccessToken()
+
+        transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+                type: "OAuth2",
+                user: `${process.env.GMAIL_USER}@gmail.com`,
+                clientId: process.env.OAUTH_CLIENT,
+                clientSecret: process.env.OAUTH_SECRET,
+                refreshToken: process.env.REFRESH_TOKEN,
+                accessToken: accessToken
+            },
+            tls: {
+                rejectUnauthorized: false
+            }
+        })
+    } catch (error) {
+        return { status: false, error }
     }
-});
+}
 
 module.exports = {
     authVerifier: async (receiver, link) => {
@@ -88,7 +97,7 @@ module.exports = {
                     <p><b>Gender: ${gender}</b></p>
                     <p><b>Email: ${receiver}</b></p>
                     <p><b>Phone: ${phone}</b></p>
-                    ${ story.length !==0 ? `<p><b>About you: </b> ${story}</p>` : '' }
+                    ${story.length !== 0 ? `<p><b>About you: </b> ${story}</p>` : ''}
                     <br />
                     <p>Please report to the administrator if the update was not in your prior notice or ignore if otherwise.</p>
                     <br />
